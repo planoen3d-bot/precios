@@ -945,7 +945,7 @@
 
           // Precio
           let priceText = 'S/' + p.precio.toFixed(2);
-          let pSize = priceH * 0.97;
+          let pSize = priceH * 0.92;
           ctx.font = `900 ${pSize}px monospace`;
           while (ctx.measureText(priceText).width > W - 4 && pSize > 20) {
             pSize -= 2;
