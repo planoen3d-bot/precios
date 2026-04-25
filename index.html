@@ -883,102 +883,86 @@
     const sel = products.filter(p => selected.has(p.id));
     if (sel.length === 0) { showToast('No hay productos seleccionados', 'error'); return; }
 
-    // Canvas en modo LANDSCAPE (como la versión que imprimió bien):
-    // - Ancho  = labelW * cols  (etiquetas lado a lado horizontalmente)
-    // - Alto   = paperH (58mm = 2 filas de 29mm)
-    // Luego rotamos +90° para que salga vertical del papel
-    //
-    // Cada etiqueta: labelW ancho x halfH alto
-    // Fila 0 (y=0..halfH)      = productos 0,2,4,...
-    // Fila 1 (y=halfH..paperH) = productos 1,3,5,...
+    // Estrategia: UNA imagen por par de etiquetas
+    // Cada imagen: 58mm ancho x 100mm alto (una sola columna, 2 filas)
+    // RawBT imprime cada imagen seguida de la siguiente
+    // Así el canvas es pequeño y no se deforma
 
-    const SC = 11; // px por mm — más alto = más resolución = texto más grande
-    const halfH  = 29 * SC;   // alto de cada fila
-    const paperH = 58 * SC;   // alto total canvas
-    const labelW = 100 * SC;  // ancho de cada etiqueta
-    const cols   = Math.ceil(sel.length / 2);
+    const DPI = 203;
+    const mm = v => Math.round(v * DPI / 25.4);
 
-    const canvas = document.createElement('canvas');
-    canvas.width  = labelW * cols;
-    canvas.height = paperH;
+    const W  = mm(58);   // 464px — ancho del papel
+    const H  = mm(100);  // 800px — alto de cada par
+    const hH = mm(50);   // 400px — mitad: cada etiqueta 50mm alto
 
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Agrupar en pares
+    const pairs = [];
+    for (let i = 0; i < sel.length; i += 2) {
+      pairs.push([sel[i], sel[i+1] || null]);
+    }
 
-    // Línea divisoria horizontal entre fila 0 y fila 1
-    ctx.save();
-    ctx.setLineDash([16, 10]);
-    ctx.strokeStyle = '#444';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, halfH);
-    ctx.lineTo(canvas.width, halfH);
-    ctx.stroke();
-    ctx.restore();
+    // Abrir todas las URLs en secuencia con pequeño delay
+    pairs.forEach((pair, pi) => {
+      setTimeout(() => {
+        const canvas = document.createElement('canvas');
+        canvas.width  = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, W, H);
 
-    sel.forEach((p, i) => {
-      const col = Math.floor(i / 2);
-      const row = i % 2;
-      const ox  = col * labelW;
-      const oy  = row * halfH;
-
-      // Separador vertical entre columnas
-      if (row === 0 && col > 0) {
+        // Línea separadora horizontal entre las 2 etiquetas
         ctx.save();
-        ctx.setLineDash([16, 10]);
+        ctx.setLineDash([14, 9]);
         ctx.strokeStyle = '#444';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(ox, 0);
-        ctx.lineTo(ox, paperH);
+        ctx.moveTo(0, hH);
+        ctx.lineTo(W, hH);
         ctx.stroke();
         ctx.restore();
-      }
 
-      const nameH  = Math.round(halfH * 0.16);
-      const priceH = halfH - nameH;
+        pair.forEach((p, ri) => {
+          if (!p) return;
+          const oy = ri * hH;
 
-      ctx.fillStyle = '#000';
-      ctx.textAlign = 'center';
+          const nameH  = Math.round(hH * 0.16);
+          const priceH = hH - nameH;
 
-      // Nombre pegado arriba
-      let nameText = p.nombre.toUpperCase();
-      let nSize = nameH * 0.88;
-      ctx.font = `900 ${nSize}px monospace`;
-      while (ctx.measureText(nameText).width > labelW - 8 && nSize > 8) {
-        nSize -= 1;
-        ctx.font = `900 ${nSize}px monospace`;
-      }
-      ctx.textBaseline = 'top';
-      ctx.fillText(nameText, ox + labelW / 2, oy);
+          ctx.fillStyle = '#000';
+          ctx.textAlign = 'center';
 
-      // Precio llenando el resto
-      let priceText = 'S/' + p.precio.toFixed(2);
-      let pSize = priceH * 0.92;
-      ctx.font = `900 ${pSize}px monospace`;
-      while (ctx.measureText(priceText).width > labelW - 4 && pSize > 20) {
-        pSize -= 2;
-        ctx.font = `900 ${pSize}px monospace`;
-      }
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText(priceText, ox + labelW / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
+          // Nombre
+          let nameText = p.nombre.toUpperCase();
+          let nSize = nameH * 0.88;
+          ctx.font = `900 ${nSize}px monospace`;
+          while (ctx.measureText(nameText).width > W - 8 && nSize > 8) {
+            nSize -= 1;
+            ctx.font = `900 ${nSize}px monospace`;
+          }
+          ctx.textBaseline = 'top';
+          ctx.fillText(nameText, W / 2, oy);
+
+          // Precio
+          let priceText = 'S/' + p.precio.toFixed(2);
+          let pSize = priceH * 0.92;
+          ctx.font = `900 ${pSize}px monospace`;
+          while (ctx.measureText(priceText).width > W - 4 && pSize > 20) {
+            pSize -= 2;
+            ctx.font = `900 ${pSize}px monospace`;
+          }
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText(priceText, W / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
+        });
+
+        const dataURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = 'rawbt:' + dataURL;
+        link.click();
+      }, pi * 800);
     });
 
-    // Rotar +90° (sentido horario) — igual que la versión que imprimió bien
-    const rotated = document.createElement('canvas');
-    rotated.width  = canvas.height;
-    rotated.height = canvas.width;
-    const rCtx = rotated.getContext('2d');
-    rCtx.translate(rotated.width, 0);
-    rCtx.rotate(Math.PI / 2);
-    rCtx.drawImage(canvas, 0, 0);
-
-    const dataURL = rotated.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = 'rawbt:' + dataURL;
-    link.click();
-    showToast('🖨️ Abriendo RawBT...');
+    showToast('🖨️ Enviando ' + pairs.length + ' etiqueta(s) a RawBT...');
   }
 
   // ============ PWA INSTALL ============
