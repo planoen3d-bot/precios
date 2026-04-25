@@ -883,90 +883,89 @@
     const sel = products.filter(p => selected.has(p.id));
     if (sel.length === 0) { showToast('No hay productos seleccionados', 'error'); return; }
 
-    // Impresora HOIN: 203 DPI
-    // Papel: 58mm ancho → 58 * 203/25.4 = 464px
-    // Cada etiqueta: 29mm ancho × 100mm alto
-    // 2 etiquetas por fila (izquierda/derecha)
-    // La impresora rota la imagen sola, no rotamos aquí
-    const DPI = 203;
-    const mmToPx = mm => Math.round(mm * DPI / 25.4);
+    // Canvas en modo LANDSCAPE (como la versión que imprimió bien):
+    // - Ancho  = labelW * cols  (etiquetas lado a lado horizontalmente)
+    // - Alto   = paperH (58mm = 2 filas de 29mm)
+    // Luego rotamos +90° para que salga vertical del papel
+    //
+    // Cada etiqueta: labelW ancho x halfH alto
+    // Fila 0 (y=0..halfH)      = productos 0,2,4,...
+    // Fila 1 (y=halfH..paperH) = productos 1,3,5,...
 
-    const paperW = mmToPx(58);   // 464px
-    const halfW  = mmToPx(29);   // 232px — ancho de cada etiqueta
-    const labelH = mmToPx(100);  // 800px — alto de cada etiqueta
-    const rows   = Math.ceil(sel.length / 2);
+    const SC = 11; // px por mm — más alto = más resolución = texto más grande
+    const halfH  = 29 * SC;   // alto de cada fila
+    const paperH = 58 * SC;   // alto total canvas
+    const labelW = 100 * SC;  // ancho de cada etiqueta
+    const cols   = Math.ceil(sel.length / 2);
 
     const canvas = document.createElement('canvas');
-    canvas.width  = paperW;
-    canvas.height = labelH * rows;
+    canvas.width  = labelW * cols;
+    canvas.height = paperH;
 
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Línea divisoria horizontal entre fila 0 y fila 1
+    ctx.save();
+    ctx.setLineDash([16, 10]);
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, halfH);
+    ctx.lineTo(canvas.width, halfH);
+    ctx.stroke();
+    ctx.restore();
+
     sel.forEach((p, i) => {
-      const row = Math.floor(i / 2);
-      const col = i % 2; // 0=izquierda, 1=derecha
-      const ox  = col * halfW;
-      const oy  = row * labelH;
+      const col = Math.floor(i / 2);
+      const row = i % 2;
+      const ox  = col * labelW;
+      const oy  = row * halfH;
 
       // Separador vertical entre columnas
-      if (col === 1) {
+      if (row === 0 && col > 0) {
         ctx.save();
         ctx.setLineDash([16, 10]);
         ctx.strokeStyle = '#444';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(halfW, oy);
-        ctx.lineTo(halfW, oy + labelH);
+        ctx.moveTo(ox, 0);
+        ctx.lineTo(ox, paperH);
         ctx.stroke();
         ctx.restore();
       }
 
-      // Separador horizontal entre filas
-      if (col === 0 && row > 0) {
-        ctx.save();
-        ctx.setLineDash([16, 10]);
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, oy);
-        ctx.lineTo(paperW, oy);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Proporciones: nombre 14%, precio 86%
-      const nameH  = Math.round(labelH * 0.14);
-      const priceH = labelH - nameH;
+      const nameH  = Math.round(halfH * 0.16);
+      const priceH = halfH - nameH;
 
       ctx.fillStyle = '#000';
       ctx.textAlign = 'center';
 
-      // --- NOMBRE: pegado arriba, sin margen ---
+      // Nombre pegado arriba
       let nameText = p.nombre.toUpperCase();
       let nSize = nameH * 0.88;
       ctx.font = `900 ${nSize}px monospace`;
-      while (ctx.measureText(nameText).width > halfW - 4 && nSize > 8) {
+      while (ctx.measureText(nameText).width > labelW - 8 && nSize > 8) {
         nSize -= 1;
         ctx.font = `900 ${nSize}px monospace`;
       }
       ctx.textBaseline = 'top';
-      ctx.fillText(nameText, ox + halfW / 2, oy);
+      ctx.fillText(nameText, ox + labelW / 2, oy);
 
-      // --- PRECIO: máximo tamaño, pegado abajo ---
+      // Precio llenando el resto
       let priceText = 'S/' + p.precio.toFixed(2);
       let pSize = priceH * 0.92;
       ctx.font = `900 ${pSize}px monospace`;
-      while (ctx.measureText(priceText).width > halfW - 2 && pSize > 20) {
+      while (ctx.measureText(priceText).width > labelW - 4 && pSize > 20) {
         pSize -= 2;
         ctx.font = `900 ${pSize}px monospace`;
       }
       ctx.textBaseline = 'alphabetic';
-      ctx.fillText(priceText, ox + halfW / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
+      ctx.fillText(priceText, ox + labelW / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
     });
 
-    // Rotar +90° sentido horario
+    // Rotar +90° (sentido horario) — igual que la versión que imprimió bien
     const rotated = document.createElement('canvas');
     rotated.width  = canvas.height;
     rotated.height = canvas.width;
@@ -980,10 +979,6 @@
     link.href = 'rawbt:' + dataURL;
     link.click();
     showToast('🖨️ Abriendo RawBT...');
-  }
-
-  function truncate(str, len) {
-    return str.length > len ? str.substring(0, len - 1) + '.' : str;
   }
 
   // ============ PWA INSTALL ============
