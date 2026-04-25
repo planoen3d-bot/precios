@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bodega Etiquetas">
+  <link rel="manifest" href="manifest.json">
+  <title>Bodega Etiquetas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --surface2: #222240;
+      --accent: #f5a623;
+      --accent2: #e8450a;
+      --text: #f0eeff;
+      --muted: #7878a0;
+      --border: #2e2e50;
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, var(--surface) 0%, #1e1e3f 100%);
+      border-bottom: 2px solid var(--accent);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    header .logo span { color: var(--accent); }
+    header .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      margin-top: 2px;
+    }
+    header .printer-badge {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+    }
+    .tab {
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* PANELS */
+    .panel { display: none; padding: 20px 16px; }
+    .panel.active { display: block; }
+
+    /* ADD PRODUCT FORM */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .form-card h2 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .field {
+      margin-bottom: 14px;
+    }
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--muted); }
+
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1.5px solid var(--danger);
+      padding: 8px;
+      font-size: 12px;
+      width: auto;
+    }
+    .btn-print {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      color: var(--text);
+      border: 1.5px solid var(--accent);
+      padding: 8px 14px;
+      font-size: 12px;
+      width: auto;
+    }
+    .btn-sm { padding: 8px 14px; font-size: 12px; width: auto; }
+
+    /* PRODUCT LIST */
+    .product-count {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 12px;
+    }
+
+    .product-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+    .product-item.selected {
+      border-color: var(--accent);
+      background: #1e1a0a;
+    }
+    .product-item .check {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .product-item.selected .check {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .product-item .check::after {
+      content: '✓';
+      font-size: 13px;
+      color: #fff;
+      display: none;
+    }
+    .product-item.selected .check::after { display: block; }
+
+    .product-info { flex: 1; min-width: 0; }
+    .product-name {
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .product-actions { display: flex; gap: 6px; }
+
+    /* PRINT PANEL */
+    .print-toolbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .print-toolbar .info {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      flex: 1;
+    }
+
+    /* LABEL PREVIEW */
+    .label-preview-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+    }
+    .label-preview-container h3 {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    /* LABEL SHEET - horizontal strip like real paper output */
+    .label-sheet {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: row;
+      height: 116px;
+      width: max-content;
+      overflow: hidden;
+    }
+    .label-single {
+      width: 200px;
+      height: 116px;
+      flex-shrink: 0;
+      border-right: 2px dashed #999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .label-single:last-child { border-right: none; }
+    .label-single .lname {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 900;
+      color: #000;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 6px;
+      border-bottom: 1.5px dashed #bbb;
+      flex-shrink: 0;
+    }
+    .label-single .lprice {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      font-size: 40px;
+      font-weight: 900;
+      color: #000;
+      letter-spacing: -1px;
+      line-height: 1;
+      padding: 0 4px;
+    }
+    .label-empty {
+      width: 200px;
+      height: 116px;
+      flex-shrink: 0;
+      background: #f5f5f5;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 200;
+    }
+    .nav-item {
+      flex: 1;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+    }
+    .nav-item .nav-icon { font-size: 22px; display: block; }
+    .nav-item .nav-label { font-size: 10px; font-weight: 600; margin-top: 2px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    .nav-item.active { color: var(--accent); }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: var(--success);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error { background: var(--danger); }
+
+    /* INSTALL BANNER */
+    .install-banner {
+      background: linear-gradient(135deg, #1e3a1e, #0d2d0d);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 16px 16px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+    .install-banner.show { display: flex; }
+    .install-banner p { font-size: 13px; flex: 1; line-height: 1.4; }
+    .install-banner p strong { color: var(--success); }
+    .btn-install {
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* EDIT MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 500;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .modal h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-cancel {
+      flex: 1;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-save {
+      flex: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      border: none;
+    }
+
+    /* RAWBT HELP */
+    .help-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .help-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .help-step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+    .help-step .num {
+      background: var(--accent);
+      color: #000;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .help-step p { font-size: 13px; color: var(--muted); line-height: 1.5; padding-top: 2px; }
+    .help-step p strong { color: var(--text); }
+
+    @media print {
+      body > *:not(#print-area) { display: none !important; }
+      #print-area { display: block !important; }
+    }
+    #print-area { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Bodega <span>Tags</span></div>
+    <div class="subtitle">Impresora térmica 58mm</div>
+  </div>
+  <div class="printer-badge">🖨️ HOIN USB</div>
+</header>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="installBanner">
+  <p>📲 <strong>Instala la app</strong> para abrirla como cualquier app</p>
+  <button class="btn-install" id="installBtn">Instalar</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('productos')">📦 Productos</div>
+  <div class="tab" onclick="switchTab('imprimir')">🏷️ Imprimir</div>
+  <div class="tab" onclick="switchTab('ayuda')">❓ Ayuda</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ======================== PRODUCTOS PANEL ======================== -->
+<div class="panel active" id="panel-productos">
+  <div class="form-card">
+    <h2>➕ Agregar Producto</h2>
+    <div class="field">
+      <label>Nombre del producto</label>
+      <input type="text" id="inputNombre" placeholder="Ej: Arroz Costeño 1kg" maxlength="30">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Precio (S/)</label>
+        <input type="number" id="inputPrecio" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input type="number" id="inputCantidad" placeholder="1" min="1" max="50" value="1">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="agregarProducto()">Agregar Producto</button>
+  </div>
+
+  <div class="product-count" id="productCount"></div>
+  <div id="listaProductos"></div>
+</div>
+
+<!-- ======================== IMPRIMIR PANEL ======================== -->
+<div class="panel" id="panel-imprimir">
+  <div class="print-toolbar">
+    <div class="info" id="printInfo">Selecciona productos para imprimir</div>
+    <button class="btn btn-print btn-sm" onclick="selectAll()">Todos</button>
+    <button class="btn btn-danger btn-sm" onclick="clearSelection()">Limpiar</button>
+  </div>
+
+  <div id="printProductList"></div>
+
+  <div class="label-preview-container" id="previewContainer" style="display:none">
+    <h3>👁️ Vista previa — papel 58mm</h3>
+    <div class="label-sheet" id="labelSheet"></div>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;font-family:'DM Mono',monospace;">2 filas por hoja · cortar con tijera ✂️</p>
+  </div>
+
+  <button class="btn btn-primary" onclick="printWithRawBT()" id="printBtn" style="display:none;margin-top:12px">
+    🖨️ Imprimir con RawBT
+  </button>
+
+  <div class="empty-state" id="emptyPrint" style="display:none">
+    <div class="icon">🏷️</div>
+    <p>No hay productos seleccionados.<br>Ve a <strong>Productos</strong> y márcalos.</p>
+  </div>
+</div>
+
+<!-- ======================== AYUDA PANEL ======================== -->
+<div class="panel" id="panel-ayuda">
+  <div class="help-card">
+    <h3>🖨️ Configurar RawBT</h3>
+    <div class="help-step">
+      <div class="num">1</div>
+      <p>Descarga <strong>RawBT Print Service</strong> desde Play Store (gratis)</p>
+    </div>
+    <div class="help-step">
+      <div class="num">2</div>
+      <p>Conecta tu impresora HOIN con el <strong>adaptador USB tipo C</strong></p>
+    </div>
+    <div class="help-step">
+      <div class="num">3</div>
+      <p>Abre RawBT → <strong>Configuración → Impresora → USB</strong> → selecciona HOIN</p>
+    </div>
+    <div class="help-step">
+      <div class="num">4</div>
+      <p>Pon el ancho de papel en <strong>58mm</strong></p>
+    </div>
+    <div class="help-step">
+      <div class="num">5</div>
+      <p>¡Listo! Vuelve aquí y presiona <strong>Imprimir con RawBT</strong></p>
+    </div>
+  </div>
+
+  <div class="help-card">
+    <h3>📲 Instalar como App</h3>
+    <div class="help-step">
+      <div class="num">1</div>
+      <p>Abre esta página en <strong>Chrome</strong></p>
+    </div>
+    <div class="help-step">
+      <div class="num">2</div>
+      <p>Toca los <strong>3 puntos</strong> arriba a la derecha</p>
+    </div>
+    <div class="help-step">
+      <div class="num">3</div>
+      <p>Selecciona <strong>"Añadir a pantalla de inicio"</strong></p>
+    </div>
+    <div class="help-step">
+      <div class="num">4</div>
+      <p>¡Aparecerá en tu pantalla principal como una app normal! 🎉</p>
+    </div>
+  </div>
+
+  <div class="help-card">
+    <h3>🏷️ Sobre las etiquetas</h3>
+    <div class="help-step">
+      <div class="num">📐</div>
+      <p>Papel térmico: <strong>58mm de ancho</strong></p>
+    </div>
+    <div class="help-step">
+      <div class="num">📏</div>
+      <p>Cada fila imprime <strong>2 etiquetas</strong> de 29mm × 10cm</p>
+    </div>
+    <div class="help-step">
+      <div class="num">✂️</div>
+      <p>Corta y dobla por la mitad para meter en el portaetiquetas</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== EDIT MODAL ======================== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>✏️ Editar Producto</h3>
+    <input type="hidden" id="editId">
+    <div class="field">
+      <label>Nombre</label>
+      <input type="text" id="editNombre" maxlength="30">
+    </div>
+    <div class="field">
+      <label>Precio (S/)</label>
+      <input type="number" id="editPrecio" step="0.01" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn btn-save" onclick="saveEdit()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT AREA (hidden, for ESC/POS generation) -->
+<div id="print-area"></div>
+
+<script>
+  // ============ DATA ============
+  let products = JSON.parse(localStorage.getItem('bodegaProducts') || '[]');
+  let selected = new Set();
+  let deferredPrompt = null;
+
+  function save() {
+    localStorage.setItem('bodegaProducts', JSON.stringify(products));
+  }
+
+  // ============ TABS ============
+  function switchTab(tab) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'imprimir') renderPrintPanel();
+  }
+
+  // ============ TOAST ============
+  function showToast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type === 'error' ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 2500);
+  }
+
+  // ============ ADD PRODUCT ============
+  function agregarProducto() {
+    const nombre = document.getElementById('inputNombre').value.trim();
+    const precio = parseFloat(document.getElementById('inputPrecio').value);
+    const cantidad = parseInt(document.getElementById('inputCantidad').value) || 1;
+
+    if (!nombre) { showToast('Escribe el nombre del producto', 'error'); return; }
+    if (isNaN(precio) || precio < 0) { showToast('Escribe un precio válido', 'error'); return; }
+
+    for (let i = 0; i < cantidad; i++) {
+      products.push({ id: Date.now() + i, nombre, precio });
+    }
+    save();
+    renderProductList();
+    document.getElementById('inputNombre').value = '';
+    document.getElementById('inputPrecio').value = '';
+    document.getElementById('inputCantidad').value = '1';
+    showToast(`✅ ${cantidad > 1 ? cantidad + ' etiquetas agregadas' : 'Producto agregado'}`);
+  }
+
+  // ============ RENDER PRODUCT LIST ============
+  function renderProductList() {
+    const container = document.getElementById('listaProductos');
+    const count = document.getElementById('productCount');
+
+    if (products.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">📦</div><p>Aún no tienes productos.<br>Agrega el primero arriba.</p></div>`;
+      count.textContent = '';
+      return;
+    }
+
+    count.textContent = `${products.length} producto${products.length !== 1 ? 's' : ''}`;
+    container.innerHTML = products.map(p => `
+      <div class="product-item ${selected.has(p.id) ? 'selected' : ''}" id="item-${p.id}">
+        <div class="check" onclick="toggleSelect(${p.id})"></div>
+        <div class="product-info">
+          <div class="product-name">${p.nombre}</div>
+          <div class="product-price">S/ ${p.precio.toFixed(2)}</div>
+        </div>
+        <div class="product-actions">
+          <button class="btn btn-print btn-sm" onclick="quickPrint(${p.id})">🖨️</button>
+          <button class="btn btn-sm" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);width:auto;padding:8px 10px;" onclick="openEdit(${p.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleSelect(id) {
+    if (selected.has(id)) selected.delete(id);
+    else selected.add(id);
+    renderProductList();
+  }
+
+  function deleteProduct(id) {
+    if (!confirm('¿Eliminar este producto?')) return;
+    products = products.filter(p => p.id !== id);
+    selected.delete(id);
+    save();
+    renderProductList();
+    showToast('Producto eliminado');
+  }
+
+  // ============ EDIT MODAL ============
+  function openEdit(id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('editId').value = id;
+    document.getElementById('editNombre').value = p.nombre;
+    document.getElementById('editPrecio').value = p.precio;
+    document.getElementById('editModal').classList.add('show');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+  }
+
+  function saveEdit() {
+    const id = parseInt(document.getElementById('editId').value);
+    const nombre = document.getElementById('editNombre').value.trim();
+    const precio = parseFloat(document.getElementById('editPrecio').value);
+    if (!nombre || isNaN(precio)) { showToast('Datos inválidos', 'error'); return; }
+    const p = products.find(x => x.id === id);
+    if (p) { p.nombre = nombre; p.precio = precio; }
+    save();
+    renderProductList();
+    closeEditModal();
+    showToast('✅ Guardado');
+  }
+
+  // ============ PRINT PANEL ============
+  function renderPrintPanel() {
+    const container = document.getElementById('printProductList');
+    const preview = document.getElementById('previewContainer');
+    const printBtn = document.getElementById('printBtn');
+    const emptyPrint = document.getElementById('emptyPrint');
+    const info = document.getElementById('printInfo');
+
+    if (products.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">📦</div><p>Primero agrega productos en la pestaña <strong>Productos</strong></p></div>`;
+      preview.style.display = 'none';
+      printBtn.style.display = 'none';
+      return;
+    }
+
+    container.innerHTML = products.map(p => `
+      <div class="product-item ${selected.has(p.id) ? 'selected' : ''}" id="pitem-${p.id}" onclick="toggleSelectPrint(${p.id})">
+        <div class="check"></div>
+        <div class="product-info">
+          <div class="product-name">${p.nombre}</div>
+          <div class="product-price">S/ ${p.precio.toFixed(2)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    const sel = products.filter(p => selected.has(p.id));
+    if (sel.length > 0) {
+      info.textContent = `${sel.length} seleccionado${sel.length !== 1 ? 's' : ''} → ${Math.ceil(sel.length / 2)} fila${Math.ceil(sel.length / 2) !== 1 ? 's' : ''}`;
+      preview.style.display = 'block';
+      printBtn.style.display = 'block';
+      emptyPrint.style.display = 'none';
+      renderLabelPreview(sel);
+    } else {
+      info.textContent = 'Toca un producto para seleccionarlo';
+      preview.style.display = 'none';
+      printBtn.style.display = 'none';
+    }
+  }
+
+  function toggleSelectPrint(id) {
+    if (selected.has(id)) selected.delete(id);
+    else selected.add(id);
+    renderPrintPanel();
+    renderProductList();
+  }
+
+  function selectAll() {
+    products.forEach(p => selected.add(p.id));
+    renderPrintPanel();
+    renderProductList();
+  }
+
+  function clearSelection() {
+    selected.clear();
+    renderPrintPanel();
+    renderProductList();
+  }
+
+  function quickPrint(id) {
+    selected.clear();
+    selected.add(id);
+    switchTab('imprimir');
+    // find the tab button
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.remove('active');
+      if (i === 1) t.classList.add('active');
+    });
+    renderPrintPanel();
+  }
+
+  // ============ LABEL PREVIEW ============
+  function renderLabelPreview(items) {
+    const sheet = document.getElementById('labelSheet');
+    let html = '';
+    items.forEach(p => { html += labelHTML(p); });
+    sheet.innerHTML = html;
+  }
+
+  function labelHTML(p) {
+    return `
+      <div class="label-single">
+        <div class="lname">${p.nombre}</div>
+        <div class="lprice">S/${p.precio.toFixed(2)}</div>
+      </div>
+    `;
+  }
+
+
+  // ============ RAWBT PRINT ============
+  function printWithRawBT() {
+    const sel = products.filter(p => selected.has(p.id));
+    if (sel.length === 0) { showToast('No hay productos seleccionados', 'error'); return; }
+
+    const SC = 8;
+    const halfH  = 29 * SC;
+    const paperH = 58 * SC;
+    const labelW = 100 * SC;
+    const cols   = Math.ceil(sel.length / 2);
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = labelW * cols;
+    canvas.height = paperH;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Línea divisoria horizontal
+    ctx.save();
+    ctx.setLineDash([12, 8]);
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, halfH);
+    ctx.lineTo(canvas.width, halfH);
+    ctx.stroke();
+    ctx.restore();
+
+    sel.forEach((p, i) => {
+      const col = Math.floor(i / 2);
+      const row = i % 2;
+      const ox  = col * labelW;
+      const oy  = row * halfH;
+
+      // Separador vertical entre columnas
+      if (row === 0 && col > 0) {
+        ctx.save();
+        ctx.setLineDash([12, 8]);
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(ox, 0);
+        ctx.lineTo(ox, paperH);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Proporciones: nombre ~18% del alto, precio ~82%
+      const nameH  = Math.round(halfH * 0.18);
+      const priceH = halfH - nameH;
+
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+
+      // --- NOMBRE: pegado arriba, sin margen ---
+      let nameText = p.nombre.toUpperCase();
+      // Fuente proporcional al nameH
+      let nSize = nameH * 0.85;
+      ctx.letterSpacing = '-1px';
+      ctx.font = `900 ${nSize}px monospace`;
+      // Ajustar si no cabe
+      while (ctx.measureText(nameText).width > labelW - 10 && nSize > 10) {
+        nSize -= 1;
+        ctx.font = `900 ${nSize}px monospace`;
+      }
+      ctx.textBaseline = 'top';
+      ctx.fillText(nameText, ox + labelW / 2, oy);
+
+      // --- PRECIO: pegado abajo, sin margen inferior ---
+      let priceText = 'S/' + p.precio.toFixed(2);
+      let pSize = priceH * 0.88;
+      ctx.font = `900 ${pSize}px monospace`;
+      // letter-spacing equivalente: usamos un canvas temporal para medir y escalar
+      while (ctx.measureText(priceText).width > labelW - 6 && pSize > 20) {
+        pSize -= 2;
+        ctx.font = `900 ${pSize}px monospace`;
+      }
+      // Dibujar pegado al borde inferior de la fila
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(priceText, ox + labelW / 2, oy + halfH - Math.round(pSize * 0.08));
+    });
+
+    // Rotar -90°
+    const rotated = document.createElement('canvas');
+    rotated.width  = canvas.height;
+    rotated.height = canvas.width;
+    const rCtx = rotated.getContext('2d');
+    rCtx.translate(0, rotated.height);
+    rCtx.rotate(-Math.PI / 2);
+    rCtx.drawImage(canvas, 0, 0);
+
+    const dataURL = rotated.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = 'rawbt:' + dataURL;
+    link.click();
+    showToast('🖨️ Abriendo RawBT...');
+  }
+
+  function truncate(str, len) {
+    return str.length > len ? str.substring(0, len - 1) + '.' : str;
+  }
+
+  // ============ PWA INSTALL ============
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('installBanner').classList.add('show');
+  });
+
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('installBanner').classList.remove('show');
+      showToast('🎉 App instalada correctamente');
+    }
+    deferredPrompt = null;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('installBanner').classList.remove('show');
+  });
+
+  // ============ INIT ============
+  renderProductList();
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
