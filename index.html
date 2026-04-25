@@ -966,13 +966,13 @@
       ctx.fillText(priceText, ox + halfW / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
     });
 
-    // Rotar -90° (como estaba antes, que funcionaba)
+    // Rotar +90° sentido horario
     const rotated = document.createElement('canvas');
     rotated.width  = canvas.height;
     rotated.height = canvas.width;
     const rCtx = rotated.getContext('2d');
-    rCtx.translate(0, rotated.height);
-    rCtx.rotate(-Math.PI / 2);
+    rCtx.translate(rotated.width, 0);
+    rCtx.rotate(Math.PI / 2);
     rCtx.drawImage(canvas, 0, 0);
 
     const dataURL = rotated.toDataURL('image/png');
