@@ -888,12 +888,9 @@
     // RawBT imprime cada imagen seguida de la siguiente
     // Así el canvas es pequeño y no se deforma
 
-    const DPI = 203;
-    const mm = v => Math.round(v * DPI / 25.4);
-
-    const W  = mm(58);   // 464px — ancho del papel
-    const H  = mm(100);  // 800px — alto de cada par
-    const hH = mm(50);   // 400px — mitad: cada etiqueta 50mm alto
+    const W  = 384;  // ancho real imprimible de la HOIN (48mm * 8dots)
+    const hH = 800;  // alto de cada etiqueta en pixels
+    const H  = hH * 2; // alto total del par
 
     // Agrupar en pares
     const pairs = [];
