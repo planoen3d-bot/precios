@@ -944,7 +944,7 @@
 
           // --- PRECIO abajo, ajustado para caber en el ancho ---
           let priceText = 'S/' + p.precio.toFixed(2);
-          let pSize = priceH * 0.88;
+          let pSize = priceH * 0.96;
           ctx.font = `900 ${pSize}px monospace`;
           // Reducir hasta que quepa en el ancho
           while (ctx.measureText(priceText).width > W - 8 && pSize > 20) {
