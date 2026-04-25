@@ -883,44 +883,39 @@
     const sel = products.filter(p => selected.has(p.id));
     if (sel.length === 0) { showToast('No hay productos seleccionados', 'error'); return; }
 
-    // Estrategia: UNA imagen por par de etiquetas
-    // Cada imagen: 58mm ancho x 100mm alto (una sola columna, 2 filas)
-    // RawBT imprime cada imagen seguida de la siguiente
-    // Así el canvas es pequeño y no se deforma
+    // Canvas: exactamente 58mm × 100mm por par (sin espacios en blanco a los lados)
+    // Cada etiqueta ocupa EXACTAMENTE la mitad del alto (50mm)
+    // El precio y nombre llenan de borde a borde para evitar que RawBT recorte
 
     const DPI = 203;
     const mm = v => Math.round(v * DPI / 25.4);
 
-    const W  = mm(58);   // 464px — ancho del papel
-    const H  = mm(100);  // 800px — alto de cada par
-    const hH = mm(50);   // 400px — mitad: cada etiqueta 50mm alto
+    const W  = mm(58);  // 464px — ancho exacto del papel
+    const hH = mm(50);  // 400px — alto de cada etiqueta
+    const H  = hH * 2; // 800px — alto total del par
 
-    // Agrupar en pares
     const pairs = [];
     for (let i = 0; i < sel.length; i += 2) {
       pairs.push([sel[i], sel[i+1] || null]);
     }
 
-    // Abrir todas las URLs en secuencia con pequeño delay
     pairs.forEach((pair, pi) => {
       setTimeout(() => {
         const canvas = document.createElement('canvas');
         canvas.width  = W;
         canvas.height = H;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'white';
+
+        // Fondo negro completo primero, luego rectángulos blancos
+        // Así no hay espacio en blanco — los bordes son negros
+        ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, W, H);
 
-        // Línea separadora horizontal entre las 2 etiquetas
-        ctx.save();
-        ctx.setLineDash([14, 9]);
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, hH);
-        ctx.lineTo(W, hH);
-        ctx.stroke();
-        ctx.restore();
+        // Margen de 2px en los bordes para el borde negro
+        const M = 2;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(M, M, W - M*2, hH - M*2);
+        ctx.fillRect(M, hH + M, W - M*2, hH - M*2);
 
         pair.forEach((p, ri) => {
           if (!p) return;
@@ -932,27 +927,27 @@
           ctx.fillStyle = '#000';
           ctx.textAlign = 'center';
 
-          // Nombre
+          // Nombre arriba — ajusta hasta llenar el ancho
           let nameText = p.nombre.toUpperCase();
           let nSize = nameH * 0.88;
           ctx.font = `900 ${nSize}px monospace`;
-          while (ctx.measureText(nameText).width > W - 8 && nSize > 8) {
+          while (ctx.measureText(nameText).width > W - M*4 && nSize > 8) {
             nSize -= 1;
             ctx.font = `900 ${nSize}px monospace`;
           }
           ctx.textBaseline = 'top';
-          ctx.fillText(nameText, W / 2, oy);
+          ctx.fillText(nameText, W / 2, oy + M + 2);
 
-          // Precio
+          // Precio abajo — máximo tamaño que quepa
           let priceText = 'S/' + p.precio.toFixed(2);
-          let pSize = priceH * 0.92;
+          let pSize = priceH * 0.97;
           ctx.font = `900 ${pSize}px monospace`;
-          while (ctx.measureText(priceText).width > W - 4 && pSize > 20) {
+          while (ctx.measureText(priceText).width > W - M*4 && pSize > 20) {
             pSize -= 2;
             ctx.font = `900 ${pSize}px monospace`;
           }
           ctx.textBaseline = 'alphabetic';
-          ctx.fillText(priceText, W / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
+          ctx.fillText(priceText, W / 2, oy + hH - M - Math.round(pSize * 0.06));
         });
 
         const dataURL = canvas.toDataURL('image/png');
@@ -962,7 +957,7 @@
       }, pi * 800);
     });
 
-    showToast('🖨️ Enviando ' + pairs.length + ' etiqueta(s) a RawBT...');
+    showToast('🖨️ Enviando a RawBT...');
   }
 
   // ============ PWA INSTALL ============
