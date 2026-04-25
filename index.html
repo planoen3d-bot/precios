@@ -883,86 +883,90 @@
     const sel = products.filter(p => selected.has(p.id));
     if (sel.length === 0) { showToast('No hay productos seleccionados', 'error'); return; }
 
-    const SC = 8;
-    const halfH  = 29 * SC;
-    const paperH = 58 * SC;
-    const labelW = 100 * SC;
-    const cols   = Math.ceil(sel.length / 2);
+    // Impresora HOIN: 203 DPI
+    // Papel: 58mm ancho → 58 * 203/25.4 = 464px
+    // Cada etiqueta: 29mm ancho × 100mm alto
+    // 2 etiquetas por fila (izquierda/derecha)
+    // La impresora rota la imagen sola, no rotamos aquí
+    const DPI = 203;
+    const mmToPx = mm => Math.round(mm * DPI / 25.4);
+
+    const paperW = mmToPx(58);   // 464px
+    const halfW  = mmToPx(29);   // 232px — ancho de cada etiqueta
+    const labelH = mmToPx(100);  // 800px — alto de cada etiqueta
+    const rows   = Math.ceil(sel.length / 2);
 
     const canvas = document.createElement('canvas');
-    canvas.width  = labelW * cols;
-    canvas.height = paperH;
+    canvas.width  = paperW;
+    canvas.height = labelH * rows;
 
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Línea divisoria horizontal
-    ctx.save();
-    ctx.setLineDash([12, 8]);
-    ctx.strokeStyle = '#666';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, halfH);
-    ctx.lineTo(canvas.width, halfH);
-    ctx.stroke();
-    ctx.restore();
-
     sel.forEach((p, i) => {
-      const col = Math.floor(i / 2);
-      const row = i % 2;
-      const ox  = col * labelW;
-      const oy  = row * halfH;
+      const row = Math.floor(i / 2);
+      const col = i % 2; // 0=izquierda, 1=derecha
+      const ox  = col * halfW;
+      const oy  = row * labelH;
 
       // Separador vertical entre columnas
-      if (row === 0 && col > 0) {
+      if (col === 1) {
         ctx.save();
-        ctx.setLineDash([12, 8]);
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 3;
+        ctx.setLineDash([16, 10]);
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(ox, 0);
-        ctx.lineTo(ox, paperH);
+        ctx.moveTo(halfW, oy);
+        ctx.lineTo(halfW, oy + labelH);
         ctx.stroke();
         ctx.restore();
       }
 
-      // Proporciones: nombre ~18% del alto, precio ~82%
-      const nameH  = Math.round(halfH * 0.18);
-      const priceH = halfH - nameH;
+      // Separador horizontal entre filas
+      if (col === 0 && row > 0) {
+        ctx.save();
+        ctx.setLineDash([16, 10]);
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, oy);
+        ctx.lineTo(paperW, oy);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Proporciones: nombre 14%, precio 86%
+      const nameH  = Math.round(labelH * 0.14);
+      const priceH = labelH - nameH;
 
       ctx.fillStyle = '#000';
       ctx.textAlign = 'center';
 
       // --- NOMBRE: pegado arriba, sin margen ---
       let nameText = p.nombre.toUpperCase();
-      // Fuente proporcional al nameH
-      let nSize = nameH * 0.85;
-      ctx.letterSpacing = '-1px';
+      let nSize = nameH * 0.88;
       ctx.font = `900 ${nSize}px monospace`;
-      // Ajustar si no cabe
-      while (ctx.measureText(nameText).width > labelW - 10 && nSize > 10) {
+      while (ctx.measureText(nameText).width > halfW - 4 && nSize > 8) {
         nSize -= 1;
         ctx.font = `900 ${nSize}px monospace`;
       }
       ctx.textBaseline = 'top';
-      ctx.fillText(nameText, ox + labelW / 2, oy);
+      ctx.fillText(nameText, ox + halfW / 2, oy);
 
-      // --- PRECIO: pegado abajo, sin margen inferior ---
+      // --- PRECIO: máximo tamaño, pegado abajo ---
       let priceText = 'S/' + p.precio.toFixed(2);
-      let pSize = priceH * 0.88;
+      let pSize = priceH * 0.92;
       ctx.font = `900 ${pSize}px monospace`;
-      // letter-spacing equivalente: usamos un canvas temporal para medir y escalar
-      while (ctx.measureText(priceText).width > labelW - 6 && pSize > 20) {
+      while (ctx.measureText(priceText).width > halfW - 2 && pSize > 20) {
         pSize -= 2;
         ctx.font = `900 ${pSize}px monospace`;
       }
-      // Dibujar pegado al borde inferior de la fila
       ctx.textBaseline = 'alphabetic';
-      ctx.fillText(priceText, ox + labelW / 2, oy + halfH - Math.round(pSize * 0.08));
+      ctx.fillText(priceText, ox + halfW / 2, oy + nameH + priceH - Math.round(pSize * 0.06));
     });
 
-    // Rotar -90°
+    // Rotar -90° (como estaba antes, que funcionaba)
     const rotated = document.createElement('canvas');
     rotated.width  = canvas.height;
     rotated.height = canvas.width;
