@@ -670,6 +670,7 @@
   </div>
 </div>
 
+<!-- v5 2026-04-25 -->
 <!-- PRINT AREA (hidden, for ESC/POS generation) -->
 <div id="print-area"></div>
 
@@ -946,8 +947,8 @@
             pSize -= 2;
             ctx.font = `900 ${pSize}px monospace`;
           }
-          ctx.textBaseline = 'alphabetic';
-          ctx.fillText(priceText, W / 2, oy + hH - M - Math.round(pSize * 0.06));
+          ctx.textBaseline = 'middle';
+          ctx.fillText(priceText, W / 2, oy + nameH + priceH / 2);
         });
 
         const dataURL = canvas.toDataURL('image/png');
