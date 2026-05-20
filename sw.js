@@ -1,4 +1,4 @@
-const CACHE = 'bodega-tags-v6';
+const CACHE = 'bodega-tags-v7';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
