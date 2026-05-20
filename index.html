@@ -300,12 +300,12 @@
     }
     .label-single:last-child { border-right: none; }
     .label-single .lname {
-      height: 30px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: monospace;
-      font-size: 12px;
+      font-size: 15px;
       font-weight: 900;
       color: #000;
       text-transform: uppercase;
@@ -940,7 +940,7 @@
         ctx.restore();
       }
 
-      const nameH  = Math.round(halfH * 0.18);
+      const nameH  = Math.round(halfH * 0.24);
       const priceH = halfH - nameH;
 
       ctx.fillStyle = '#000';
@@ -948,14 +948,14 @@
 
       // Nombre pegado arriba
       let nameText = p.nombre.toUpperCase();
-      let nSize = nameH * 0.9;
+      let nSize = nameH * 0.94;
       ctx.font = `900 ${nSize}px monospace`;
       while (ctx.measureText(nameText).width > labelW - 6 && nSize > 8) {
         nSize -= 1;
         ctx.font = `900 ${nSize}px monospace`;
       }
       ctx.textBaseline = 'top';
-      ctx.fillText(nameText, ox + labelW / 2, oy + nameH * 0.08);
+      ctx.fillText(nameText, ox + labelW / 2, oy + nameH * 0.03);
 
       // Precio llenando el resto
       const parts = p.precio.toFixed(2).split('.');
