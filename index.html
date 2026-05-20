@@ -277,35 +277,44 @@
       margin-bottom: 12px;
     }
 
-    /* LABEL SHEET - horizontal strip like real paper output */
+    /* LABEL SHEET - approximates the rotated RawBT preview */
     .label-sheet {
       background: white;
       border: 1px solid #ccc;
       border-radius: 4px;
       display: flex;
       flex-direction: row;
-      height: 116px;
+      height: 360px;
       width: max-content;
       overflow: hidden;
     }
-    .label-single {
-      width: 200px;
-      height: 116px;
+    .label-col {
+      width: 116px;
+      height: 360px;
       flex-shrink: 0;
-      border-right: 2px dashed #999;
       display: flex;
       flex-direction: column;
+      border-right: 2px dashed #999;
+    }
+    .label-col:last-child { border-right: none; }
+    .label-single {
+      width: 116px;
+      height: 180px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: row-reverse;
       overflow: hidden;
       box-sizing: border-box;
     }
-    .label-single:last-child { border-right: none; }
+    .label-single + .label-single { border-top: 2px dashed #999; }
     .label-single .lname {
-      height: 48px;
+      width: 30px;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: monospace;
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 900;
       color: #000;
       text-transform: uppercase;
@@ -313,9 +322,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding: 0 6px;
-      border-bottom: 1.5px dashed #bbb;
+      padding: 0 2px;
+      border-left: 1.5px dashed #bbb;
       flex-shrink: 0;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
     }
     .label-single .lprice {
       flex: 1;
@@ -323,22 +334,24 @@
       align-items: center;
       justify-content: center;
       font-family: monospace;
-      font-size: 56px;
+      font-size: 48px;
       font-weight: 900;
       color: #000;
       letter-spacing: -2px;
       line-height: 1;
       padding: 0 4px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
     }
     .label-single .lprice .cents {
       font-size: 0.48em;
       align-self: flex-start;
-      margin-top: 14px;
+      margin-top: 26px;
       letter-spacing: -1px;
     }
     .label-empty {
-      width: 200px;
-      height: 116px;
+      width: 116px;
+      height: 180px;
       flex-shrink: 0;
       background: #f5f5f5;
     }
@@ -870,7 +883,9 @@
   function renderLabelPreview(items) {
     const sheet = document.getElementById('labelSheet');
     let html = '';
-    items.forEach(p => { html += labelHTML(p); });
+    for (let i = 0; i < items.length; i += 2) {
+      html += `<div class="label-col">${labelHTML(items[i])}${items[i + 1] ? labelHTML(items[i + 1]) : '<div class="label-empty"></div>'}</div>`;
+    }
     sheet.innerHTML = html;
   }
 
