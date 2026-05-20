@@ -300,12 +300,12 @@
     }
     .label-single:last-child { border-right: none; }
     .label-single .lname {
-      height: 44px;
+      height: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: monospace;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
       color: #000;
       text-transform: uppercase;
@@ -323,12 +323,18 @@
       align-items: center;
       justify-content: center;
       font-family: monospace;
-      font-size: 40px;
+      font-size: 56px;
       font-weight: 900;
       color: #000;
-      letter-spacing: -1px;
+      letter-spacing: -2px;
       line-height: 1;
       padding: 0 4px;
+    }
+    .label-single .lprice .cents {
+      font-size: 0.48em;
+      align-self: flex-start;
+      margin-top: 14px;
+      letter-spacing: -1px;
     }
     .label-empty {
       width: 200px;
@@ -869,10 +875,11 @@
   }
 
   function labelHTML(p) {
+    const parts = p.precio.toFixed(2).split('.');
     return `
       <div class="label-single">
         <div class="lname">${p.nombre}</div>
-        <div class="lprice">S/${p.precio.toFixed(2)}</div>
+        <div class="lprice">S/${parts[0]}<span class="cents">.${parts[1]}</span></div>
       </div>
     `;
   }
@@ -933,7 +940,7 @@
         ctx.restore();
       }
 
-      const nameH  = Math.round(halfH * 0.22);
+      const nameH  = Math.round(halfH * 0.18);
       const priceH = halfH - nameH;
 
       ctx.fillStyle = '#000';
@@ -941,44 +948,44 @@
 
       // Nombre pegado arriba
       let nameText = p.nombre.toUpperCase();
-      let nSize = nameH * 0.95;
+      let nSize = nameH * 0.9;
       ctx.font = `900 ${nSize}px monospace`;
-      while (ctx.measureText(nameText).width > labelW - 10 && nSize > 8) {
+      while (ctx.measureText(nameText).width > labelW - 6 && nSize > 8) {
         nSize -= 1;
         ctx.font = `900 ${nSize}px monospace`;
       }
       ctx.textBaseline = 'top';
-      ctx.fillText(nameText, ox + labelW / 2, oy + nameH * 0.3);
+      ctx.fillText(nameText, ox + labelW / 2, oy + nameH * 0.08);
 
       // Precio llenando el resto
-      let priceText = 'S/' + p.precio.toFixed(2);
-      let pSize = priceH * 0.97;
+      const parts = p.precio.toFixed(2).split('.');
+      const beforeDot = 'S/' + parts[0];
+      const afterDot  = '.' + parts[1];
+      let pSize = priceH * 1.08;
+      let centsSize = pSize * 0.48;
       ctx.font = `900 ${pSize}px monospace`;
-      while (ctx.measureText(priceText).width > labelW - 10 && pSize > 20) {
+      let wBefore = ctx.measureText(beforeDot).width;
+      ctx.font = `900 ${centsSize}px monospace`;
+      let wAfter = ctx.measureText(afterDot).width;
+      while (wBefore + wAfter > labelW - 6 && pSize > 20) {
         pSize -= 2;
+        centsSize = pSize * 0.48;
         ctx.font = `900 ${pSize}px monospace`;
+        wBefore = ctx.measureText(beforeDot).width;
+        ctx.font = `900 ${centsSize}px monospace`;
+        wAfter = ctx.measureText(afterDot).width;
       }
       ctx.textBaseline = 'middle';
-      // Dibujar precio en 3 partes para controlar espacio alrededor del punto
-      const centerY = oy + nameH + priceH * 0.52;
-      const parts = priceText.split('.');
-      const beforeDot = parts[0]; // e.g. "S/12"
-      const afterDot  = parts[1]; // e.g. "00"
-
-      ctx.letterSpacing = '-18px';
-      const wBefore = ctx.measureText(beforeDot).width;
-      const wDot    = ctx.measureText('.').width;
-      const wAfter  = ctx.measureText(afterDot).width;
-      const dotGap  = -pSize * 0.08; // juntar el punto
-      const totalW  = wBefore + wDot + dotGap*2 + wAfter;
+      const centerY = oy + nameH + priceH * 0.55;
+      const totalW  = wBefore + wAfter - pSize * 0.05;
       const startX  = ox + labelW / 2 - totalW / 2;
 
       ctx.textAlign = 'left';
+      ctx.font = `900 ${pSize}px monospace`;
       ctx.fillText(beforeDot, startX, centerY);
-      ctx.fillText('.', startX + wBefore + dotGap, centerY);
-      ctx.fillText(afterDot, startX + wBefore + dotGap + wDot + dotGap, centerY);
+      ctx.font = `900 ${centsSize}px monospace`;
+      ctx.fillText(afterDot, startX + wBefore - pSize * 0.05, centerY - pSize * 0.22);
       ctx.textAlign = 'center';
-      ctx.letterSpacing = '0px';
     });
 
     // Rotar +90° — igual que la versión que imprimió bien
